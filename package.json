@@ -1,0 +1,26 @@
+{
+  "name": "paysis-tests",
+  "version": "1.0.0",
+  "description": "API tests for Paysis project",
+  "scripts": {
+    "test": "mocha --config .mocharc.js",
+    "format": "prettier ./ --write --list-different",
+    "lint": "prettier ./ --check"
+  },
+  "author": "Alex Sanzhanov",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.18.10",
+    "@babel/core": "^7.19.1",
+    "@babel/plugin-transform-runtime": "^7.19.1",
+    "@babel/preset-env": "^7.19.1",
+    "@babel/register": "^7.18.9",
+    "prettier": "2.7.1"
+  },
+  "dependencies": {
+    "chai": "^4.3.6",
+    "dotenv": "^16.0.3",
+    "mocha": "^10.0.0",
+    "supertest": "^6.2.4"
+  }
+}
