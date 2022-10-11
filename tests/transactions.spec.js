@@ -1,14 +1,14 @@
 import UsersHelper from '../helpers/users.helper'
 import TransactionsHelper from '../helpers/transactions.helper'
 import {expect} from 'chai'
-import {getRandomItem} from "../helpers/common.helper";
+import {getRandomItem} from '../helpers/common.helper'
 
 describe('Transactions', function () {
-  describe.only('Transaction creation', function () {
+  describe('Transaction creation', function () {
     let usersHelper = new UsersHelper()
     let transactionsHelper = new TransactionsHelper()
     let userFromBefore, userFromAfter, userToBefore, userToAfter
-    let amount = 100
+    const amount = 100
 
     before(async function () {
       await usersHelper.create()
@@ -20,7 +20,6 @@ describe('Transactions', function () {
       userFromAfter = usersHelper.response.body
       await usersHelper.get(userToBefore.id)
       userToAfter = usersHelper.response.body
-      //console.log(transactionsHelper)
     })
 
     it('response status code is 200', function () {
@@ -40,11 +39,11 @@ describe('Transactions', function () {
     })
 
     it('sender has amount deducted', function () {
-      expect(userFromAfter.amount).to.eq(userFromBefore - amount)
+      expect(userFromAfter.amount).to.eq(userFromBefore.amount - amount)
     })
 
     it('receiver has amount added', function () {
-      expect(userToAfter.amount).to.eq(userToBefore + amount)
+      expect(userToAfter.amount).to.eq(userToBefore.amount + amount)
     })
 
     it('total amount of 2 users is fixed', function () {
@@ -54,18 +53,19 @@ describe('Transactions', function () {
     })
   })
 
-  describe('Get transaction', function () {
+  describe('Get single transaction', function () {
     let usersHelper = new UsersHelper()
     let transactionsHelper = new TransactionsHelper()
     let userFrom, userTo, transaction
+    const amount = 199
 
     before(async function () {
       await usersHelper.create()
-      userFrom = usersHelper.response.body
+      userFrom = usersHelper.response.body.id
       await usersHelper.create()
-      userTo = usersHelper.response.body
+      userTo = usersHelper.response.body.id
 
-      await transactionsHelper.create(userFrom.id, userTo.id, 199)
+      await transactionsHelper.create(userFrom, userTo, amount)
       transaction = transactionsHelper.response.body
       await transactionsHelper.get(transaction.id)
     })
@@ -80,6 +80,14 @@ describe('Transactions', function () {
 
     it('response body contains initial amount', function () {
       expect(transactionsHelper.response.body.amount).to.eq(transaction.amount)
+    })
+
+    it('response body contains sernder id', function () {
+      expect(transactionsHelper.response.body.from).to.eq(userFrom)
+    })
+
+    it('response body contains receiver id', function () {
+      expect(transactionsHelper.response.body.to).to.eq(userTo)
     })
   })
 
@@ -98,8 +106,7 @@ describe('Transactions', function () {
       await transactionsHelper.create(userFrom.id, userTo.id, 19)
       await transactionsHelper.create(userFrom.id, userTo.id, 9)
       await transactionsHelper.get()
-      allTransactions = transactionsHelper.response.body
-      console.log(allTransactions)
+      allTransactions = transactionsHelper.response.body.slice(-3)
     })
 
     it('response status code is 200', function () {
@@ -107,7 +114,7 @@ describe('Transactions', function () {
     })
 
     it('response body contains array of at least 3 transactions', function () {
-      expect(allTransactions.length).to.be.at.least(3)
+      expect(allTransactions.length).to.eq(3)
     })
 
     it('response body contains transaction id', function () {
@@ -118,21 +125,25 @@ describe('Transactions', function () {
       expect(getRandomItem(allTransactions).amount).not.to.be.undefined
     })
 
-    // it('response body contains sender id', function () {
-    //   expect(getRandomItem(allTransactions).from).to.eq(userFrom.id)
-    // })
-    //
-    // it('response body contains recipient id', function () {
-    //   expect(getRandomItem(allTransactions).to).to.eq(userTo.id)
-    // })
-    //
-    // it('response body contains transaction id', function () {
-    //   expect(getRandomItem(allTransactions).id).to.be.oneOf([allTransactions[allTransactions.length-1].id,
-    //       allTransactions[allTransactions.length-2].id, allTransactions[allTransactions.length-3].id], 'nooo why fail??')
-    // })
-    // it('response body contains transaction amount', function () {
-    //   expect(getRandomItem(transactionsHelper.response.body).amount).to.be.oneOf([29,19,9], 'nooo why fail??')
-    // })
+    it('response body contains sender id', function () {
+      expect(getRandomItem(allTransactions).from).to.eq(userFrom.id)
+    })
 
+    it('response body contains recipient id', function () {
+      expect(getRandomItem(allTransactions).to).to.eq(userTo.id)
+    })
+
+    it('response body contains transaction id', function () {
+      expect(getRandomItem(allTransactions).id).to.be.oneOf(
+        [allTransactions[0].id, allTransactions[1].id, allTransactions[2].id],
+        'nooo why fail??'
+      )
+    })
+    it('response body contains transaction amount', function () {
+      expect(getRandomItem(allTransactions).amount).to.be.oneOf(
+        [allTransactions[0].amount, allTransactions[1].amount, allTransactions[2].amount],
+        'nooo why fail??'
+      )
+    })
   })
 })
