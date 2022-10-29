@@ -4,90 +4,139 @@ import {expect} from 'chai'
 
 describe('Users', function () {
   describe('User creation', function () {
-    let usersHelper = new UsersHelper()
+    const usersHelper = new UsersHelper()
+    let response
 
     before(async function () {
-      await usersHelper.create()
+      response = await usersHelper.create()
+    })
+
+    after(async function (){
+      await usersHelper.delete(response.body.id)
     })
 
     it('response status code is 200', function () {
-      expect(usersHelper.response.statusCode).to.eq(200)
+      expect(response.statusCode).to.eq(200)
     })
 
     it('response body contains user id', function () {
-      expect(usersHelper.response.body.id).to.be.a('string')
+      expect(response.body.id).to.be.a('string')
     })
 
     it('response body contains initial amount', function () {
-      expect(usersHelper.response.body.amount).to.be.a('number')
+      expect(response.body.amount).to.be.a('number')
     })
   })
 
-  describe('Get user', function () {
-    let usersHelper = new UsersHelper()
-    let user
+  describe('Get', function () {
+    describe('Single user', function () {
+      const usersHelper = new UsersHelper()
+      let user
+      let response
 
-    before(async function () {
-      await usersHelper.create()
-      user = usersHelper.response.body
-      await usersHelper.get(user.id)
+      before(async function () {
+        await usersHelper.create()
+        user = usersHelper.response.body
+        response = await usersHelper.get(user.id)
+      })
+
+      after(async function (){
+        await usersHelper.delete(user.id)
+      })
+
+      it('response status code is 200', function () {
+        expect(response.statusCode).to.eq(200)
+      })
+
+      it('response body contains user id', function () {
+        expect(response.body.id).to.eq(user.id)
+      })
+
+      it('response body contains initial amount', function () {
+        expect(response.body.amount).to.eq(user.amount)
+      })
     })
 
-    it('response status code is 200', function () {
-      expect(usersHelper.response.statusCode).to.eq(200)
-    })
+    describe('All users', function () {
+      const usersHelper = new UsersHelper()
+      let response
+      let userId1
+      let userId2
 
-    it('response body contains user id', function () {
-      expect(usersHelper.response.body.id).to.eq(user.id)
-    })
+      before(async function () {
+        userId1 = (await usersHelper.create()).body.id
+        userId2 = (await usersHelper.create()).body.id
+        response = await usersHelper.get()
+      })
 
-    it('response body contains initial amount', function () {
-      expect(usersHelper.response.body.amount).to.eq(user.amount)
-    })
-  })
+      after(async function (){
+        await usersHelper.delete(userId1)
+        await usersHelper.delete(userId2)
+      })
 
-  describe('Get all users', function () {
-    let usersHelper = new UsersHelper()
+      it('response status code is 200', function () {
+        expect(response.statusCode).to.eq(200)
+      })
 
-    before(async function () {
-      await usersHelper.create()
-      await usersHelper.create()
-      await usersHelper.get()
-    })
+      it('response body contains array of at least 2 users', function () {
+        expect(response.body.length).to.be.at.least(2)
+      })
 
-    it('response status code is 200', function () {
-      expect(usersHelper.response.statusCode).to.eq(200)
-    })
+      it('response body contains user id', function () {
+        expect(getRandomItem(response.body).id).not.to.be.undefined
+      })
 
-    it('response body contains array of at least 2 users', function () {
-      expect(usersHelper.response.body.length).to.be.at.least(2)
-    })
+      it('response body contains user id', function () {
+        for (let user of response.body)
+        expect(user.id).to.be.a('string')
+      })
 
-    it('response body contains user id', function () {
-      expect(getRandomItem(usersHelper.response.body).id).not.to.be.undefined
-    })
+      it('response body contains initial amount', function () {
+        expect(getRandomItem(response.body).amount).not.to.be.undefined
+      })
 
-    it('response body contains initial amount', function () {
-      expect(getRandomItem(usersHelper.response.body).amount).not.to.be.undefined
+      it('response body contains initial amount', function () {
+        for (let user of response.body)
+          expect(user.amount).to.be.a('number')
+      })
     })
   })
 
   describe('Delete user', function () {
-    let usersHelper = new UsersHelper()
-    let userId
+    const usersHelper = new UsersHelper()
+    let response
 
     before(async function () {
-      await usersHelper.create()
-      userId = usersHelper.response.body.id
-      await usersHelper.delete(userId)
+      const userId = (await usersHelper.create()).body.id
+      response = await usersHelper.delete(userId)
     })
 
     it('response status code is 200', function () {
-      expect(usersHelper.response.statusCode).to.eq(200)
+      expect(response.statusCode).to.eq(200)
     })
 
     it('response body contains success message', function () {
-      expect(usersHelper.response.body.message).to.eq('User deleted.')
+      expect(response.body.message).to.eq('User deleted.')
     })
   })
+
+  describe('Delete already deleted user', function () {
+    const usersHelper = new UsersHelper()
+    let response
+
+    before(async function () {
+      const userId = (await usersHelper.create()).body.id
+      await usersHelper.delete(userId)
+      response = await usersHelper.delete(userId)
+    })
+
+    it('response status code is 400', function () {
+      expect(response.statusCode).to.eq(400)
+    })
+
+    it('response body contains success message', function () {
+      expect(response.body.message).to.eq('No user found.')
+    })
+  })
+
 })

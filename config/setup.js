@@ -3,7 +3,7 @@ import AuthHelper from '../helpers/auth.helper'
 import supertest from 'supertest'
 
 before(async function () {
-  let authHelper = new AuthHelper()
+  const authHelper = new AuthHelper()
   await authHelper.logIn(process.env.LOGIN, process.env.PASSWORD)
   process.env['TOKEN'] = authHelper.response.body.token
 })
