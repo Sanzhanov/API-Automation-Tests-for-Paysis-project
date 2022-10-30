@@ -1,11 +1,11 @@
 import supertest from 'supertest'
 
 export default class TransactionsHelper {
-  async create(userFromId, userToId, amount) {
+  async create(from, to, amount) {
     this.response = await supertest(process.env.BASE_URL)
       .post('/transactions')
       .set('Authorization', `Bearer ${process.env.TOKEN}`)
-      .send({from: userFromId, to: userToId, amount: amount})
+      .send({from, to, amount})
     return this.response
   }
 
