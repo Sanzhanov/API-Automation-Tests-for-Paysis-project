@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import AuthHelper from '../helpers/auth.helper'
-import supertest from 'supertest'
+import ConfigHelper from '../helpers/config.helper'
 
 before(async function () {
   const authHelper = new AuthHelper()
@@ -9,7 +9,6 @@ before(async function () {
 })
 
 after(async function () {
-  await supertest(process.env.BASE_URL)
-    .delete('/config')
-    .set('Authorization', `Bearer ${process.env.TOKEN}`)
+  const configHelper = new ConfigHelper()
+  await configHelper.delete()
 })
