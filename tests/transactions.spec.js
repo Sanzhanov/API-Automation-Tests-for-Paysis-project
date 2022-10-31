@@ -3,7 +3,7 @@ import TransactionsHelper from '../helpers/transactions.helper'
 import {expect} from 'chai'
 import {getRandomItem} from '../helpers/common.helper'
 
-describe.only('Transactions', function () {
+describe('Transactions', function () {
   describe('Create transaction', function () {
     describe('With valid data', function () {
       const usersHelper = new UsersHelper()
@@ -57,7 +57,7 @@ describe.only('Transactions', function () {
     })
 
     describe('With invalid data', function () {
-      describe('Negative amount', function () {
+      describe.skip('Negative amount', function () {
         const usersHelper = new UsersHelper()
         const transactionsHelper = new TransactionsHelper()
         let userFromBefore, userFromAfter, userToBefore, userToAfter
@@ -126,6 +126,66 @@ describe.only('Transactions', function () {
           expect(userToAfter.amount).to.eq(userToBefore.amount)
         })
       })
+
+      describe('With non-existing sender', function () {
+        const usersHelper = new UsersHelper()
+        const transactionsHelper = new TransactionsHelper()
+        let userToBefore, userToAfter
+        let response
+        const amount = 5000
+
+        before(async function () {
+          userToBefore = (await usersHelper.create()).body
+          response = await transactionsHelper.create('1', userToBefore.id, amount)
+          userToAfter = (await usersHelper.get(userToBefore.id)).body
+        })
+
+        after(async function () {
+          await usersHelper.delete(userToBefore.id)
+        })
+
+        it('response status code is 400', function () {
+          expect(response.statusCode).to.eq(400)
+        })
+
+        it('Response body contains error message', function () {
+          expect(response.body.message).to.eq('Sender not found.')
+        })
+
+        it("Receiver's balance is unchanged", function () {
+          expect(userToAfter.amount).to.eq(userToBefore.amount)
+        })
+      })
+
+      describe('With non-existing receiver', function () {
+        const usersHelper = new UsersHelper()
+        const transactionsHelper = new TransactionsHelper()
+        let userFromBefore, userFromAfter
+        let response
+        const amount = 5000
+
+        before(async function () {
+          userFromBefore = (await usersHelper.create()).body
+          response = await transactionsHelper.create(userFromBefore.id, '1', amount)
+          userFromAfter = (await usersHelper.get(userFromBefore.id)).body
+        })
+
+        after(async function () {
+          await usersHelper.delete(userFromBefore.id)
+        })
+
+        it('response status code is 400', function () {
+          expect(response.statusCode).to.eq(400)
+        })
+
+        it('Response body contains error message', function () {
+          expect(response.body.message).to.eq('Receiver not found.')
+        })
+
+        it("Sender's balance is unchanged", function () {
+          expect(userFromBefore.amount).to.eq(userFromAfter.amount)
+        })
+      })
     })
   })
 
@@ -133,61 +193,65 @@ describe.only('Transactions', function () {
     describe('Single transaction', function () {
       let usersHelper = new UsersHelper()
       let transactionsHelper = new TransactionsHelper()
-      let userFrom, userTo, transaction
+      let userFromId, userToId, transaction, response
       const amount = 199
 
       before(async function () {
-        await usersHelper.create()
-        userFrom = usersHelper.response.body.id
-        await usersHelper.create()
-        userTo = usersHelper.response.body.id
+        userFromId = (await usersHelper.create()).body.id
+        userToId = (await usersHelper.create()).body.id
+        transaction = (await transactionsHelper.create(userFromId, userToId, amount)).body
+        response = await transactionsHelper.get(transaction.id)
+      })
 
-        await transactionsHelper.create(userFrom, userTo, amount)
-        transaction = transactionsHelper.response.body
-        await transactionsHelper.get(transaction.id)
+      after(async function () {
+        await usersHelper.delete(userFromId)
+        await usersHelper.delete(userToId)
       })
 
       it('response status code is 200', function () {
-        expect(transactionsHelper.response.statusCode).to.eq(200)
+        expect(response.statusCode).to.eq(200)
       })
 
       it('response body contains transaction id', function () {
-        expect(transactionsHelper.response.body.id).to.eq(transaction.id)
+        expect(response.body.id).to.eq(transaction.id)
       })
 
       it('response body contains initial amount', function () {
-        expect(transactionsHelper.response.body.amount).to.eq(transaction.amount)
+        expect(response.body.amount).to.eq(transaction.amount)
       })
 
-      it('response body contains sernder id', function () {
-        expect(transactionsHelper.response.body.from).to.eq(userFrom)
+      it('response body contains sender id', function () {
+        expect(response.body.from).to.eq(userFromId)
       })
 
       it('response body contains receiver id', function () {
-        expect(transactionsHelper.response.body.to).to.eq(userTo)
+        expect(response.body.to).to.eq(userToId)
       })
     })
 
     describe('All transactions', function () {
       let usersHelper = new UsersHelper()
       let transactionsHelper = new TransactionsHelper()
-      let userFrom, userTo, allTransactions
+      let userFrom, userTo, allTransactions, response
 
       before(async function () {
-        await usersHelper.create()
-        userFrom = usersHelper.response.body
-        await usersHelper.create()
-        userTo = usersHelper.response.body
+        userFrom = (await usersHelper.create()).body
+        userTo = (await usersHelper.create()).body
 
         await transactionsHelper.create(userFrom.id, userTo.id, 29)
         await transactionsHelper.create(userFrom.id, userTo.id, 19)
         await transactionsHelper.create(userFrom.id, userTo.id, 9)
-        await transactionsHelper.get()
-        allTransactions = transactionsHelper.response.body.slice(-3)
+        response = await transactionsHelper.get()
+        allTransactions = response.body.slice(-3)
+      })
+
+      after(async function () {
+        await usersHelper.delete(userFrom.id)
+        await usersHelper.delete(userTo.id)
       })
 
       it('response status code is 200', function () {
-        expect(transactionsHelper.response.statusCode).to.eq(200)
+        expect(response.statusCode).to.eq(200)
       })
 
       it('response body contains array of at least 3 transactions', function () {
