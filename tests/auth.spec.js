@@ -8,7 +8,6 @@ describe('Authentication', function () {
   describe('Log in with valid credentials', function () {
     before(async function () {
       response = await authHelper.logIn(process.env.LOGIN, process.env.PASSWORD)
-      console.log(response.body.token)
     })
 
     it('Response status code is 200', function () {
