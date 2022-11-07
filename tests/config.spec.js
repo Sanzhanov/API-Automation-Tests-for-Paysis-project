@@ -38,20 +38,26 @@ describe('Config', function () {
         expect(response.statusCode).to.eq(200)
       })
 
-      it('Response body contains new number of entries', function () {
-        expect(response.body.number_of_entries).to.eq(newNumberOfEntries)
-      })
-
-      it('Response body contains new initial amount', function () {
-        expect(response.body.initial_amount).to.eq(newInitialAmount)
-      })
-
       it('New config contains new number of entries', function () {
         expect(newConfig.number_of_entries).to.eq(newNumberOfEntries)
       })
 
       it('New config contains new initial amount', function () {
         expect(newConfig.initial_amount).to.eq(newInitialAmount)
+      })
+
+      it('New config contains new data', function () {
+        expect(newConfig).to.include({
+          'number_of_entries': newNumberOfEntries,
+          'initial_amount': newInitialAmount,
+        })
+      })
+
+      it('New config contains new data', function () {
+        expect(newConfig).to.have.keys({
+          'number_of_entries': newNumberOfEntries,
+          'initial_amount': newInitialAmount,
+        })
       })
     })
 
