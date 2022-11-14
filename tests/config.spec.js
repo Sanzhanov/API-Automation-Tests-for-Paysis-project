@@ -77,7 +77,7 @@ describe('Config', function () {
 
       it('Response body contains error message', function () {
         expect(response.body.message).to.eq(
-          'Number of entries must be between 5 and 50 (inclusively).'
+          'Number of entries must be between 5 and 25 (inclusively).'
         )
       })
 
